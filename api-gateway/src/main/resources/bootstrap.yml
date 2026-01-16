@@ -1,0 +1,96 @@
+#
+#spring:
+#  application:
+#    name: API-GATEWAY
+#
+#  cloud:
+#    gateway:
+#      routes:
+#
+#        # ================= PRODUCT SERVICE =================
+#        - id: product-service
+#          uri: lb://PRODUCT-SERVICE
+#          predicates:
+#            - Path=/products/**
+#          filters:
+#            - AuthenticationFilter
+#
+#        # ================= CUSTOMER SERVICE =================
+#        - id: customer-service
+#          uri: lb://CUSTOMER-SERVICE
+#          predicates:
+#            - Path=/customers/**
+#          filters:
+#            - AuthenticationFilter
+#
+#        # ================= ORDER SERVICE =================
+#        - id: order-tracking-service
+#          uri: lb://ORDER-TRACKING-SERVICE
+#          predicates:
+#            - Path=/orders/**
+#          filters:
+#            - AuthenticationFilter
+#
+#        # ================= AUTH SERVICE =================
+#        - id: authentication-service
+#          uri: lb://AUTHENTICATION-SERVICE
+#          predicates:
+#            - Path=/auth/**
+#
+#        # ================= AGGREGATED SWAGGER DOCS =================
+#
+#        - id: auth-openapi
+#          uri: lb://AUTHENTICATION-SERVICE
+#          predicates:
+#            - Path=/v3/api-docs/auth
+#          filters:
+#            - RewritePath=/v3/api-docs/auth, /v3/api-docs
+#
+#        - id: product-openapi
+#          uri: lb://PRODUCT-SERVICE
+#          predicates:
+#            - Path=/v3/api-docs/product
+#          filters:
+#            - RewritePath=/v3/api-docs/product, /v3/api-docs
+#
+#        - id: customer-openapi
+#          uri: lb://CUSTOMER-SERVICE
+#          predicates:
+#            - Path=/v3/api-docs/customer
+#          filters:
+#            - RewritePath=/v3/api-docs/customer, /v3/api-docs
+#
+#        - id: order-openapi
+#          uri: lb://ORDER-TRACKING-SERVICE
+#          predicates:
+#            - Path=/v3/api-docs/order
+#          filters:
+#            - RewritePath=/v3/api-docs/order, /v3/api-docs
+#
+#logging:
+#  level:
+#    org.springframework.security: INFO
+#
+#springdoc:
+#  swagger-ui:
+#    path: /swagger-ui.html
+#    urls:
+#      - name: Authentication Service
+#        url: /v3/api-docs/auth
+#      - name: Product Service
+#        url: /v3/api-docs/product
+#      - name: Order Service
+#        url: /v3/api-docs/order
+#
+#
+#spring:
+#  application:
+#    name: api-gateway
+#
+#  config:
+#    import: optional:configserver:http://localhost:8083
+#
+#  cloud:
+#    config:
+#      enabled: true
+#      fail-fast: true

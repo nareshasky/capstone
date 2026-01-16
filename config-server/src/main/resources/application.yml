@@ -1,0 +1,36 @@
+server:
+  port: 8083
+spring:
+  application:
+    name: config-server
+#  profiles:
+#    active: composite
+  cloud:
+    config:
+      server:
+        composite:
+          - type: vault
+            order: 1
+          - type: git
+            order: 2
+
+        vault:
+          host: 127.0.0.1
+          port: 8200
+          scheme: http
+          authentication: token
+          token: 00000000-0000-0000-0000-000000000000
+          kv-version: 2
+          backend: secret
+          default-key: authentication-service
+
+        git:
+          uri: https://github.com/naresh2508/cap-insurance-config-server
+          default-label: main
+          clone-on-start: true
+
+logging:
+  level:
+    org.springframework.cloud.config.server.environment: DEBUG
+    org.springframework.vault: DEBUG
+    org.springframework.web.client.RestTemplate: DEBUG
