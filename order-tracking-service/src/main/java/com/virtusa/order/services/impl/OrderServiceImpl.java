@@ -227,7 +227,7 @@ public class OrderServiceImpl implements OrderService {
             throw new InvalidOrderException("Completed order cannot be cancelled");
         }
 
-        // 🔥 REVERT STOCK
+        // REVERT STOCK
         for (OrderItem item : order.getItems()) {
 
             productClient.increaseStock(
