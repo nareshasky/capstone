@@ -1,0 +1,129 @@
+version: '3.8'
+
+networks:
+  ecommerce-network:
+
+services:
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    networks:
+      - "ecommerce-network"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  service-registry:
+    image: service-registry:1.0
+    ports:
+      - "8761:8761"
+    networks:
+      - "ecommerce-network"
+  config-server:
+    image: config-server:1.0
+    ports:
+      - "8083:8083"
+    networks:
+      - "ecommerce-network"
+    depends_on:
+      - service-registry
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8083/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8761/eureka/
+
+  api-gateway:
+    image: api-gateway:1.0
+    ports:
+      - "8084:8084"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      service-registry:
+        condition: service_started
+    networks:
+      - "ecommerce-network"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8761/eureka/
+      SPRING_APPLICATION_NAME: api-gateway
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8083
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8083
+      SPRING_CLOUD_CONFIG_DISCOVERY_ENABLED: true
+
+  authentication-service:
+    image: authentication-service:1.0
+    ports:
+      - "8085:8085"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      service-registry:
+        condition: service_started
+      mysql-db:
+        condition: service_started
+    networks:
+      - "ecommerce-network"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8761/eureka/
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8083
+      SPRING_APPLICATION_NAME: authentication-service
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8083
+      SPRING_CLOUD_CONFIG_DISCOVERY_ENABLED: true
+
+  order-tracking-service:
+    image: order-tracking-service:1.0
+    ports:
+      - "8082:8082"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      service-registry:
+        condition: service_started
+      mysql-db:
+        condition: service_started
+    networks:
+      - "ecommerce-network"
+    environment:
+      SPRING_APPLICATION_NAME: order-tracking-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8761/eureka/
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8083
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8083
+      SPRING_CLOUD_CONFIG_DISCOVERY_ENABLED: true
+      SPRING_CLOUD_CONFIG_FAIL_FAST: false
+      SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS: "20"
+      SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL: "3000"
+      SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL: "10000"
+      SPRING_CLOUD_CONFIG_RETRY_MULTIPLIER: "1.5"
+
+  product-service:
+    image: product-service:1.0
+    ports:
+      - "8081:8081"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      service-registry:
+        condition: service_started
+      mysql-db:
+        condition: service_started
+    networks:
+      - ecommerce-network
+    environment:
+      SPRING_APPLICATION_NAME: product-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8761/eureka/
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8083
+      SPRING_CLOUD_CONFIG_FAIL_FAST: false
+      SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS: 20
+      SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL: 3000
+      SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL: 10000
+      SPRING_CLOUD_CONFIG_RETRY_MULTIPLIER: 1.5
+volumes:
+  mysql-data:
