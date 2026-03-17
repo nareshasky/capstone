@@ -21,8 +21,8 @@ import java.util.List;
 //@EnableMethodSecurity
 public class MicroserviceSecurityConfig {
 
-    //    @Value("${gateway.url}")
-    private String gatewayUrl="http://localhost:8084";
+    @Value("${gateway.url}")
+    private String gatewayUrl;
 
     @Bean
     public OpenAPI openAPI() {

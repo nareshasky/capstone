@@ -27,8 +27,8 @@ import java.util.List;
 @EnableWebSecurity
 public class AuthConfig {
 
-//    @Value("${gateway.url}")
-    private String gatewayUrl="http://localhost:8084";
+    @Value("${gateway.url}")
+    private String gatewayUrl;
 
 
     @Bean
